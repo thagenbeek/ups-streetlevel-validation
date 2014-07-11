@@ -12,8 +12,8 @@
 	"ext-soap": "*"
     },
     "autoload": {
-	"psr-4": {
-		"UpsApi\\": "src/"
-	}
+		"psr-4": {
+			"UpsApi\\": "src/"
+		}
     }
 }

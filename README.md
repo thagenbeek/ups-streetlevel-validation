@@ -20,11 +20,11 @@ $upsValidator = new AddressValidation('YOUR_UPS_ACCESS_KEY','YOUR_UPS_USERNAME',
 
 $upsValidator->set_cosignee('Tobias Hagenbeek');
 //$upsValidator->set_address('1 Street'); // invalid
-$upsValidator->set_address('799 E DRAGRAM'); // valid
+$upsValidator->set_address('3734 Elvis Presley Blvd'); // valid
 // (optional) $upsValidator->set_suite('SUITE 5A');
-$upsValidator->set_city('Tuscon');
-$upsValidator->set_state('Arizona'); // can be AZ
-$upsValidator->set_zip('85705');
+$upsValidator->set_city('Memphis');
+$upsValidator->set_state('Tennessee'); // can be AZ
+$upsValidator->set_zip('38116');
 // (optional) $upsValidator->set_country('US'); // NOT USA (two digits only)
 
 echo $upsValidator->validate()->getResult();
