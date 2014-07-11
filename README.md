@@ -22,9 +22,9 @@ $upsValidator->set_cosignee('Tobias Hagenbeek');
 //$upsValidator->set_address('1 Street'); // invalid
 $upsValidator->set_address('799 E DRAGRAM'); // valid
 // (optional) $upsValidator->set_suite('SUITE 5A');
-$upsValidator->set_city('TUCSON');
+$upsValidator->set_city('Tuscon');
 $upsValidator->set_state('Arizona'); // can be AZ
-$upsValidator->set_zip('38116');
+$upsValidator->set_zip('85705');
 // (optional) $upsValidator->set_country('US'); // NOT USA (two digits only)
 
 echo $upsValidator->validate()->getResult();
