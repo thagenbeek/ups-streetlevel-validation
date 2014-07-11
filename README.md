@@ -18,7 +18,7 @@ require('vendor/autoload.php');
 use UpsApi\AddressValidation;
 $upsValidator = new AddressValidation('YOUR_UPS_ACCESS_KEY','YOUR_UPS_USERNAME','YOUR_UPS_PASSWORD');
 
-$upsValidator->set_cosignee('Tobias Hagenbeek');
+$upsValidator->set_addressee('Tobias Hagenbeek');
 //$upsValidator->set_address('1 Street'); // invalid
 $upsValidator->set_address('3734 Elvis Presley Blvd'); // valid
 // (optional) $upsValidator->set_suite('SUITE 5A');

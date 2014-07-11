@@ -9,32 +9,122 @@ include("helpers/xml2array.php");
  */
 class AddressValidation
 {
-    private $accessKey;
+	/**
+	 * UPS access key, provided after API access is granted
+	 * @var string $accessKey
+	 */
+	private $accessKey;
+
+	/**
+     * UPS UserID
+     * @var string $userid
+     */
 	private $userid;
-	private $password;
-	private $wsdl =  "/schemas/address_validation/XAV.wsdl";
-	private $operation = "ProcessXAV";
-	private $endpointurl = 'https://onlinetools.ups.com/webservices/XAV';
-	private $outputFileName = "XOLTResult.xml";
 	
+	/**
+	 * UPS Password
+	 * @var string $password
+	 */
+	private $password;
+
+	/** 
+	 * local path-location of UPS wsdl
+	 * @var string $wsdl
+	 */
+	private $wsdl =  "/schemas/address_validation/XAV.wsdl";
+	
+	/**
+	 * Name of the operation performing the soap request
+	 * @var string $operation
+	 */
+	private $operation = "ProcessXAV";
+	
+	/**
+	 * UPS's endpoint (same for dev as live)
+	 * @var string $enpointurl
+	 */
+	private $endpointurl = 'https://onlinetools.ups.com/webservices/XAV';
+	
+	/**
+	 * UPS's XML schema url
+	 * @var string $upsXmlSchemaUrl
+	 */
+	private $upsXmlSchemaUrl = 'http://www.ups.com/XMLSchema/XOLTWS/UPSS/v1.0';
+	
+	/**
+	 * Error array holds any refular or soap exceptions returned with the response when not valid
+	 * @var array $errors 
+	 */
 	private $errors = array();
 	
 	//address information
-	private $cosigneeName;
+	/**
+	 * @var string $addressee
+	 */
+	private $addressee;
+	
+	/**
+	 * Primary Address line, line1 and line2 will be concated
+	 * @var string $address_line1
+	 */ 
 	private $address_line1;
+
+	/**
+	 * Secondary (ie. suite #, apt # Address line, line1 and line2 will be concated
+	 * @var string $address_line2
+	 */
 	private $address_line2;
+	
+	/** 
+	 * @var string $city
+	 */
 	private $city;
+	
+	/**
+	 * Can be int only for US, else can be string
+	 * @var mixed (int|string) $zip
+	 */
 	private $zip;
+	
+	/**
+	 * @var string $state
+	 */
 	private $state;
+	
+	/**
+	 * @var string $country
+	 */
 	private $country = "US";
 	
+	/**
+	 * isValid is set by the result, and will be read through $this->isValid
+	 * @var bool $isValid
+	 */
 	private $isValid;
+	
+	/**
+	 * The raw response from UPS
+	 * @var mixed (xml|string)
+	 */
 	private $response;
+	
+	/**
+	 * The raw request send to UPS
+	 * @var mixed (xml|string)
+	 */
 	private $request;
+	
+	/** 
+	 * The xml2array parsed response
+	 * @var array $responseArray
+	 */
 	private $responseArray;
 
+	/**
+	 * Any suggestions we might recieve on a invalid address
+	 * @var array $suggestions
+	 */
 	private $suggestions = array();
-	private $extracted_data;
   		
   	/**
   	 * Construct using UPS credentials
@@ -48,49 +138,60 @@ class AddressValidation
 		$this->userid = $userid;
 		$this->password = $password;
 	}
+	
 	/**
 	 * Set the reciever name ("firstName lastName")
-	 * @param string $cosigneeName
+	 * @param string $addressee
+	 * @return \UpsApi\AddressValidation
 	 */
-	public function set_cosignee($cosigneeName)
+	public function set_addressee($addressee)
 	{
-		$this->cosigneeName = (string)$cosigneeName;
+		$this->addressee = (string)$addressee;
+		return $this;
 	}
 	
 	/**
 	 * Set the street address for address line 1
 	 * @param string $address_line1
+	 * @return \UpsApi\AddressValidation
 	 */
 	public function set_address($address_line1)
 	{
 		$this->address_line1 = (string)$address_line1;	
+		return $this;
 	}
 	
 	/**
 	 * Set the street address for address line 2
 	 * @param string $address_line2
+	 * @return \UpsApi\AddressValidation
 	 */
 	public function set_suite($address_line2)
 	{
 		$this->address_line2 = (string)$address_line2;
+		return $this;
 	}
 	
 	/**
 	 * set the city
 	 * @param string $city
+	 * @return \UpsApi\AddressValidation
 	 */
 	public function set_city($city)
 	{
 		$this->city = (string)$city;
+		return $this;
 	}
 	
 	/**
 	 * Set the zipcode
 	 * @param int $zip
+	 * @return \UpsApi\AddressValidation
 	 */
 	public function set_zip($zip)
 	{
 		$this->zip = (int)$zip;
+		return $this;
 	}
 	
 	/**
@@ -98,21 +199,23 @@ class AddressValidation
 	 * would be a two character (upper) representation or full proper cased version for US (REQUIRED US ONLY)
 	 * can be considered optional when not US, but if used full name is required
 	 * @param string $state
-	 * @return void
+	 * @return \UpsApi\AddressValidation
 	 */
 	public function set_state($state)
 	{
 		$this->state = (string)$state;
+		return $this;
 	}
 	
 	/**
 	 * sets the two character (upper) representation of a country (i.e. United States == US, the Netherlands == NL) 
 	 * @param string $country
-	 * @return void
+	 * @return \UpsApi\AddressValidation
 	 */
 	public function set_country($country)
 	{
 		$this->country = (string)$country;
+		return $this;
 	}
 
 	/**
@@ -142,24 +245,26 @@ class AddressValidation
 	 */
 	private function setResponseArray()
 	{
+		// convert the raw response xml to an array
 		$data = xml2array($this->getRawResponse());
+		// set the response array to be the response body
 		$this->responseArray = $data['soapenv:Envelope']['soapenv:Body'];
 	
 		return $this;
 	}
 	
 	/**
-	 * validate the set mailing address
-	 * @return \UpsApi\AddressValidation | catches errors from soap or exceptions
+	 * validate the set mailing address | catches errors from soap or exceptions
+	 * @return \UpsApi\AddressValidation
 	 */
 	public function validate()
 	{
 		try
 		{
-			$mode = array
-			(
-					'soap_version' => 'SOAP_1_1',  // use soap 1.1 client
-					'trace' => 1
+			// set the general soap mode.
+			$mode = array(
+				'soap_version' => 'SOAP_1_1',  // use soap 1.1 client
+				'trace' => 1
 			);
 	
 			// initialize soap client
@@ -181,7 +286,8 @@ class AddressValidation
 			if(isset($resp->ValidAddressIndicator))
 			{
 				$this->isValid = true;
-			}else
+			}
+			else
 			{
 				$this->isValid = false;
 			}
@@ -214,14 +320,18 @@ class AddressValidation
 	 */
 	private function create_header()
 	{
-		//create soap header
-		$usernameToken['Username'] = $this->userid;
-		$usernameToken['Password'] = $this->password;
-		$serviceAccessLicense['AccessLicenseNumber'] = $this->accessKey;
-		$upss['UsernameToken'] = $usernameToken;
-		$upss['ServiceAccessToken'] = $serviceAccessLicense;
-	
-		$header = new \SoapHeader('http://www.ups.com/XMLSchema/XOLTWS/UPSS/v1.0','UPSSecurity',$upss);
+		//set the ups service data
+		$ups_service_data = array(
+			'UsernameToken' => array(
+				'Username' => $this->userid,
+				'Password' => $this->password
+			),
+			'ServiceAccessToken' => array(
+				'AccessLicenseNumber' => $this->accessKey
+			)
+		);
+		// build the headr from the data
+		$header = new \SoapHeader($this->upsXmlSchemaUrl,'UPSSecurity',$ups_service_data);
 	
 		return $header;
 	}
@@ -237,8 +347,8 @@ class AddressValidation
 		$request['Request'] = $option;
 	
 		//$request['RegionalRequestIndicator'] = '1';
-		$addrkeyfrmt['ConsigneeName'] = $this->cosigneeName;
-		$addrkeyfrmt['AddressLine'] = $this->address_line1.' '.$this->address_line2;
+		$addrkeyfrmt['ConsigneeName'] = $this->addressee;
+		$addrkeyfrmt['AddressLine'] = implode(' ',array($this->address_line1,$this->address_line2));
 		//$addrkeyfrmt['Region'] = $this->city.','.$this->state.','.$this->zip;
 		$addrkeyfrmt['PoliticalDivision2'] = $this->city;
 		$addrkeyfrmt['PoliticalDivision1'] = $this->state;
@@ -285,34 +395,23 @@ class AddressValidation
 	{
 		return $this->suggestions;
 	}
-		
+	
+	/**
+	 * Returns the json encoded results of the query
+	 * @return mixed $result
+	 */
 	public function getResult(){
-		if($this->isValid())
-		{
-			$result = array(
-				'status' => 200,
-				'success' => $this->isValid(),
-				'results' => $this->getResponseArray(),
-				'raw' => array(
-						'request' => $this->getRawRequest(),
-						'response' => $this->getRawResponse()
-				)
-			);
-		}
-		else
-		{
-			$result = array(
-				'status' => 200,
-				'success' => $this->isValid(),
-				'suggestions' => $this->setSuggestionsFromResponse()->getSuggestions(),
-				'results' => $this->getResponseArray(),
-				'errors' => $this->errors,
-				'raw' => array(
-						'request' => $this->getRawRequest(),
-						'response' => $this->getRawResponse()
-				)
-			);
-		}
+		$result = array(
+			'status' => 200,
+			'success' => $this->isValid(),
+			'suggestions' => $this->isValid() ? false : $this->setSuggestionsFromResponse()->getSuggestions(),
+			'results' => $this->getResponseArray(),
+			'errors' => $this->isValid() ? false : $this->errors,
+			'raw' => array(
+				'request' => $this->getRawRequest(),
+				'response' => $this->getRawResponse()
+			)
+		);
 		
 		return json_encode($result);
 	}
