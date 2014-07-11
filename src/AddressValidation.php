@@ -120,9 +120,15 @@ class AddressValidation
 	public function setSuggestionsFromResponse()
 	{
 		$suggestions = $this->getResponseArray()['xav:XAVResponse']['xav:Candidate'];
+		
+		$i = 0;
 		foreach($suggestions as $k => $data)
 		{
-			$this->suggestions[] = $data['xav:AddressKeyFormat'];
+			if (!is_int($key) && $i == 1)
+				$this->suggestions[] = $data;
+			elseif (is_int($key))
+				$this->suggestions[] = $data['xav:AddressKeyFormat'];
+			$i++;
 		}
 	
 		return $this;
@@ -307,7 +313,7 @@ class AddressValidation
 			);
 		}
 		
-		return json_encode($result);
+		return $result;
 	}
 }
 
