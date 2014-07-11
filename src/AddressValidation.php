@@ -17,6 +17,8 @@ class AddressValidation
 	private $endpointurl = 'https://onlinetools.ups.com/webservices/XAV';
 	private $outputFileName = "XOLTResult.xml";
 	
+	private $errors = array();
+	
 	//address information
 	private $cosigneeName;
 	private $address_line1;
@@ -188,16 +190,14 @@ class AddressValidation
 		}
 		catch(\Exception $ex)
 		{
-			echo"<pre>";
-			print_r($ex);
-			echo"</pre>";
+			$this->errors['exception'] = $ex;
 		}
 		catch(\SoapFault $e)
 		{
-			echo "<pre>";
-			print_r($e);
-			echo "</pre>";
+			$this->errors['soap'] = $e;
 		}
+		
+		return $this;
 	}	
 	
 	/**
@@ -306,6 +306,7 @@ class AddressValidation
 				'success' => $this->isValid(),
 				'suggestions' => $this->setSuggestionsFromResponse()->getSuggestions(),
 				'results' => $this->getResponseArray(),
+				'errors' => $this->errors,
 				'raw' => array(
 						'request' => $this->getRawRequest(),
 						'response' => $this->getRawResponse()
